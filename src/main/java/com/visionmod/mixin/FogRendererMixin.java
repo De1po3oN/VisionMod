@@ -2,68 +2,48 @@
 package com.visionmod.mixin;
 
 import com.visionmod.VisionModClient;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.fog.FogRenderer;
+import net.minecraft.world.level.material.FogType;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 @Mixin(FogRenderer.class)
 public abstract class FogRendererMixin {
 
-    private static boolean visionmod$inLiquid() {
+    @ModifyArgs(
+        method = "setupFog",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/fog/FogRenderer;updateBuffer(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V"
+        ),
+        require = 0
+    )
+    private void visionmod$removeLiquidFog(
+            Args args,
+            Camera camera
+    ) {
         if (!VisionModClient.enabled) {
-            return false;
+            return;
         }
 
-        Minecraft client = Minecraft.getInstance();
+        FogType fluid = camera.getFluidInCamera();
 
-        return client.player != null &&
-            (client.player.isInWater() || client.player.isInLava());
-    }
+        if (fluid != FogType.WATER && fluid != FogType.LAVA) {
+            return;
+        }
 
-    @ModifyVariable(
-        method = "updateBuffer",
-        at = @At("HEAD"),
-        argsOnly = true,
-        ordinal = 0,
-        require = 0
-    )
-    private float visionmod$environmentStart(float original) {
-        return visionmod$inLiquid() ? 0.0F : original;
-    }
+        float far = 1000000.0F;
 
-    @ModifyVariable(
-        method = "updateBuffer",
-        at = @At("HEAD"),
-        argsOnly = true,
-        ordinal = 1,
-        require = 0
-    )
-    private float visionmod$environmentEnd(float original) {
-        return visionmod$inLiquid() ? 512.0F : original;
-    }
+        // Environmental fog
+        args.set(3, far);
+        args.set(4, far);
 
-    @ModifyVariable(
-        method = "updateBuffer",
-        at = @At("HEAD"),
-        argsOnly = true,
-        ordinal = 2,
-        require = 0
-    )
-    private float visionmod$renderStart(float original) {
-        return visionmod$inLiquid() ? 0.0F : original;
-    }
-
-    @ModifyVariable(
-        method = "updateBuffer",
-        at = @At("HEAD"),
-        argsOnly = true,
-        ordinal = 3,
-        require = 0
-    )
-    private float visionmod$renderEnd(float original) {
-        return visionmod$inLiquid() ? 512.0F : original;
+        // Render-distance fog
+        args.set(5, far);
+        args.set(6, far);
     }
 }
-
