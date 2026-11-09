@@ -2,6 +2,8 @@
 package com.visionmod.mixin;
 
 import com.visionmod.VisionModClient;
+
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.world.level.material.FogType;
@@ -22,11 +24,21 @@ public abstract class FogRendererMixin {
         ),
         require = 0
     )
-    private void visionmod$removeLiquidFog(
-            Args args,
-            Camera camera
-    ) {
+    private void visionmod$removeLiquidFog(Args args) {
+
         if (!VisionModClient.enabled) {
+            return;
+        }
+
+        Minecraft client = Minecraft.getInstance();
+
+        if (client == null || client.gameRenderer == null) {
+            return;
+        }
+
+        Camera camera = client.gameRenderer.getMainCamera();
+
+        if (camera == null) {
             return;
         }
 
@@ -38,12 +50,10 @@ public abstract class FogRendererMixin {
 
         float far = 1000000.0F;
 
-        // Environmental fog
         args.set(3, far);
-        args.set(4, far);
+        args.set(4, far + 1000.0F);
 
-        // Render-distance fog
-        args.set(4, far + 1000.0F); 
+        args.set(5, far);
         args.set(6, far + 1000.0F);
     }
 }
