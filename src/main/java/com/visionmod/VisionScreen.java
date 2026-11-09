@@ -4,9 +4,14 @@ package com.visionmod;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
+import org.lwjgl.glfw.GLFW;
+
 public final class VisionScreen extends Screen {
+
+    private Button particlesButton;
 
     public VisionScreen() {
         super(Component.literal("Vision Mod"));
@@ -15,106 +20,86 @@ public final class VisionScreen extends Screen {
     @Override
     protected void init() {
 
-        int buttonWidth = 180;
-        int buttonHeight = 20;
+        int width = 190;
+        int height = 20;
         int spacing = 24;
 
-        int x = (this.width - buttonWidth) / 2;
-        int y = Math.max(35, (this.height - 180) / 2);
+        int x = (this.width - width) / 2;
+        int y = Math.max(35, (this.height - 190) / 2);
 
-        // FullBright
-        addToggle(
-            "FullBright",
-            VisionModClient.fullBright,
-            x, y, buttonWidth, buttonHeight,
+        addToggle("FullBright", VisionModClient.fullBright,
+            x, y, width, height,
             button -> {
                 VisionModClient.fullBright =
                     !VisionModClient.fullBright;
-
                 button.setMessage(label(
-                    "FullBright",
-                    VisionModClient.fullBright
+                    "FullBright", VisionModClient.fullBright
                 ));
-            }
-        );
+            });
 
-        // Ore Highlight
-        addToggle(
-            "Ore Highlight",
-            VisionModClient.oreHighlight,
-            x, y + spacing, buttonWidth, buttonHeight,
+        addToggle("Ore Highlight", VisionModClient.oreHighlight,
+            x, y + spacing, width, height,
             button -> {
                 VisionModClient.oreHighlight =
                     !VisionModClient.oreHighlight;
-
                 button.setMessage(label(
-                    "Ore Highlight",
-                    VisionModClient.oreHighlight
+                    "Ore Highlight", VisionModClient.oreHighlight
                 ));
-            }
-        );
+            });
 
-        // Clear Water
-        addToggle(
-            "Clear Water",
-            VisionModClient.clearWater,
-            x, y + spacing * 2,
-            buttonWidth, buttonHeight,
+        addToggle("Clear Water", VisionModClient.clearWater,
+            x, y + spacing * 2, width, height,
             button -> {
                 VisionModClient.clearWater =
                     !VisionModClient.clearWater;
-
                 button.setMessage(label(
-                    "Clear Water",
-                    VisionModClient.clearWater
+                    "Clear Water", VisionModClient.clearWater
                 ));
-            }
-        );
+            });
 
-        // Clear Lava
-        addToggle(
-            "Clear Lava",
-            VisionModClient.clearLava,
-            x, y + spacing * 3,
-            buttonWidth, buttonHeight,
+        addToggle("Clear Lava", VisionModClient.clearLava,
+            x, y + spacing * 3, width, height,
             button -> {
                 VisionModClient.clearLava =
                     !VisionModClient.clearLava;
-
                 button.setMessage(label(
-                    "Clear Lava",
-                    VisionModClient.clearLava
+                    "Clear Lava", VisionModClient.clearLava
                 ));
-            }
-        );
+            });
 
-        // Player Hearts
-        addToggle(
-            "Player Hearts",
-            VisionModClient.playerHearts,
-            x, y + spacing * 4,
-            buttonWidth, buttonHeight,
+        addToggle("Player Hearts", VisionModClient.playerHearts,
+            x, y + spacing * 4, width, height,
             button -> {
                 VisionModClient.playerHearts =
                     !VisionModClient.playerHearts;
-
                 button.setMessage(label(
-                    "Player Hearts",
-                    VisionModClient.playerHearts
+                    "Player Hearts", VisionModClient.playerHearts
                 ));
-            }
+            });
+
+        particlesButton = this.addRenderableWidget(
+            Button.builder(
+                label("Particles", VisionModClient.particles),
+                button -> {
+                    VisionModClient.particles =
+                        !VisionModClient.particles;
+
+                    button.setMessage(label(
+                        "Particles", VisionModClient.particles
+                    ));
+                }
+            ).bounds(
+                x, y + spacing * 5, width, height
+            ).build()
         );
 
-        // Кнопка закрытия
         this.addRenderableWidget(
             Button.builder(
                 Component.literal("Close"),
-                button -> this.onClose()
+                button -> onClose()
             ).bounds(
-                x,
-                y + spacing * 5 + 8,
-                buttonWidth,
-                buttonHeight
+                x, y + spacing * 6 + 5,
+                width, height
             ).build()
         );
     }
@@ -132,19 +117,38 @@ public final class VisionScreen extends Screen {
             Button.builder(
                 label(name, value),
                 action
-            ).bounds(
-                x, y, width, height
-            ).build()
+            ).bounds(x, y, width, height).build()
         );
     }
 
     private static Component label(
-            String name,
-            boolean value
+            String name, boolean value
     ) {
         return Component.literal(
-            name + (value ? "  §aON" : "  §cOFF")
+            name + (value ? "  [ON]" : "  [OFF]")
         );
+    }
+
+    @Override
+    public boolean mouseClicked(
+            MouseButtonEvent click,
+            boolean doubled
+    ) {
+
+        if (click.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT
+                && particlesButton != null
+                && particlesButton.isMouseOver(
+                    click.x(), click.y()
+                )) {
+
+            this.minecraft.setScreen(
+                new ParticleSettingsScreen()
+            );
+
+            return true;
+        }
+
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
@@ -156,24 +160,34 @@ public final class VisionScreen extends Screen {
     ) {
         super.render(graphics, mouseX, mouseY, delta);
 
+        int y = Math.max(35, (this.height - 190) / 2);
+
         graphics.drawCenteredString(
             this.font,
             "VISION MOD",
             this.width / 2,
-            Math.max(12, (this.height - 180) / 2 - 20),
-            0xFFFFFF
+            y - 22,
+            0xFFFFFFFF
+        );
+
+        graphics.drawCenteredString(
+            this.font,
+            "Right-click Particles for settings",
+            this.width / 2,
+            y + 174,
+            0xFFAAAAAA
         );
 
         graphics.drawCenteredString(
             this.font,
             VisionModClient.enabled
-                ? "Modules active"
+                ? "Modules enabled"
                 : "All modules disabled by End",
             this.width / 2,
-            this.height - 20,
+            y + 187,
             VisionModClient.enabled
-                ? 0x55FF55
-                : 0xFF5555
+                ? 0xFF55FF55
+                : 0xFFFF5555
         );
     }
 
