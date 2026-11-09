@@ -5,10 +5,10 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "LightTextureMixin",
-    "FogRendererMixin"
+    "FogRendererMixin",
+    "PlayerHeartsMixin"
   ],
   "injectors": {
     "defaultRequire": 1
   }
 }
-
