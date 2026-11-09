@@ -1,0 +1,10 @@
+{
+ "schemaVersion":1,
+ "id":"visionmod",
+ "version":"${version}",
+ "name":"Vision Mod",
+ "description":"Toggleable client-side visibility helpers",
+ "environment":"client",
+ "entrypoints":{"client":["com.visionmod.VisionModClient"]},
+ "depends":{"fabricloader":">=0.17.0","minecraft":"1.21.11","java":">=21","fabric-api":"*"}
+}
