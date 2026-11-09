@@ -1,1 +1,14 @@
 
+{
+  "required": true,
+  "package": "com.visionmod.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "LightTextureMixin",
+    "FogRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
+
