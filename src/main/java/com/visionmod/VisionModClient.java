@@ -15,7 +15,7 @@ public final class VisionModClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-
+OreHighlight.init();
         KeyMapping.Category category = KeyMapping.Category.register(
             Identifier.fromNamespaceAndPath("visionmod", "general")
         );
