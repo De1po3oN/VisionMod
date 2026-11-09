@@ -1,1 +1,5 @@
-{"key.category.visionmod.controls":"Vision Mod","key.visionmod.toggle":"Включить/выключить Vision"}
+
+{
+  "key.visionmod.toggle": "Включить/выключить Vision Mod",
+  "key.category.visionmod.general": "Vision Mod"
+}
