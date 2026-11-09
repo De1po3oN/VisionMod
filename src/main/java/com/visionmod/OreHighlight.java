@@ -5,7 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.Shapes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +58,9 @@ public final class OreHighlight {
     public static void init() {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (!VisionModClient.enabled || client.level == null
+
+            if (!VisionModClient.enabled
+                    || client.level == null
                     || client.player == null) {
                 visibleOres.clear();
                 return;
@@ -91,7 +94,9 @@ public final class OreHighlight {
                         BlockState state =
                             client.level.getBlockState(cursor);
 
-                        if (!ORES.contains(state.getBlock())) {
+                        Block block = state.getBlock();
+
+                        if (!ORES.contains(block)) {
                             continue;
                         }
 
@@ -116,7 +121,9 @@ public final class OreHighlight {
         });
 
         WorldRenderEvents.BEFORE_ENTITIES.register(context -> {
-            if (!VisionModClient.enabled || visibleOres.isEmpty()) {
+
+            if (!VisionModClient.enabled
+                    || visibleOres.isEmpty()) {
                 return;
             }
 
@@ -143,29 +150,36 @@ public final class OreHighlight {
 
                 float[] rgb = color(block);
 
+                int red = (int) (rgb[0] * 255.0F);
+                int green = (int) (rgb[1] * 255.0F);
+                int blue = (int) (rgb[2] * 255.0F);
+
+                int argb = 0xFF000000
+                    | (red << 16)
+                    | (green << 8)
+                    | blue;
+
                 double x = pos.getX() - camera.x;
                 double y = pos.getY() - camera.y;
                 double z = pos.getZ() - camera.z;
 
-                LevelRenderer.renderLineBox(
+                ShapeRenderer.renderShape(
                     context.matrices(),
                     lines,
-                    x + 0.002,
-                    y + 0.002,
-                    z + 0.002,
-                    x + 0.998,
-                    y + 0.998,
-                    z + 0.998,
-                    rgb[0],
-                    rgb[1],
-                    rgb[2],
-                    1.0F
+                    Shapes.box(
+                        0.002, 0.002, 0.002,
+                        0.998, 0.998, 0.998
+                    ),
+                    x, y, z,
+                    argb,
+                    2.0F
                 );
             }
         });
     }
 
     private static float[] color(Block block) {
+
         if (block == Blocks.DIAMOND_ORE ||
             block == Blocks.DEEPSLATE_DIAMOND_ORE) {
             return new float[] {0.0F, 1.0F, 1.0F};
@@ -213,4 +227,3 @@ public final class OreHighlight {
         return new float[] {0.7F, 0.7F, 0.7F};
     }
 }
-
