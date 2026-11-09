@@ -2,6 +2,7 @@
 {
   "required": true,
   "package": "com.visionmod.mixin",
+  "plugin": "com.visionmod.VisionMixinPlugin",
   "compatibilityLevel": "JAVA_21",
   "client": [
     "LightTextureMixin",
