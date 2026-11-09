@@ -10,10 +10,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 public final class VisionModClient implements ClientModInitializer {
+
     public static volatile boolean enabled = false;
 
     @Override
     public void onInitializeClient() {
+
         KeyMapping.Category category = KeyMapping.Category.register(
             Identifier.fromNamespaceAndPath("visionmod", "general")
         );
