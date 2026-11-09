@@ -6,7 +6,9 @@
   "client": [
     "LightTextureMixin",
     "FogRendererMixin",
-    "PlayerHeartsMixin"
+    "PlayerHeartsMixin",
+    "ParticleEngineMixin",
+    "SprintParticleMixin"
   ],
   "injectors": {
     "defaultRequire": 1
