@@ -59,20 +59,23 @@ public final class OreHighlight {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
 
-            if (!VisionModClient.enabled
+            if (!VisionModClient.isOreEnabled()
                     || client.level == null
                     || client.player == null) {
                 visibleOres.clear();
                 return;
             }
 
-            if (++ticks % 20 != 0) {
+            ticks++;
+
+            if (ticks % 20 != 0) {
                 return;
             }
 
             visibleOres.clear();
 
             BlockPos center = client.player.blockPosition();
+
             BlockPos.MutableBlockPos cursor =
                 new BlockPos.MutableBlockPos();
 
@@ -103,17 +106,22 @@ public final class OreHighlight {
                         boolean exposed = false;
 
                         for (Direction side : Direction.values()) {
-                            BlockPos neighbor = cursor.relative(side);
 
-                            if (!client.level.getBlockState(
-                                    neighbor).isSolidRender()) {
+                            BlockPos neighbor =
+                                cursor.relative(side);
+
+                            if (!client.level
+                                    .getBlockState(neighbor)
+                                    .isSolidRender()) {
                                 exposed = true;
                                 break;
                             }
                         }
 
                         if (exposed) {
-                            visibleOres.add(cursor.immutable());
+                            visibleOres.add(
+                                cursor.immutable()
+                            );
                         }
                     }
                 }
@@ -122,8 +130,9 @@ public final class OreHighlight {
 
         WorldRenderEvents.BEFORE_ENTITIES.register(context -> {
 
-            if (!VisionModClient.enabled
-                    || visibleOres.isEmpty()) {
+            if (!VisionModClient.isOreEnabled()
+                    || visibleOres.isEmpty()
+                    || context.consumers() == null) {
                 return;
             }
 
@@ -134,15 +143,19 @@ public final class OreHighlight {
             }
 
             Vec3 camera =
-                client.gameRenderer.getMainCamera().position();
+                client.gameRenderer
+                    .getMainCamera().position();
 
             VertexConsumer lines =
-                context.consumers().getBuffer(RenderTypes.lines());
+                context.consumers()
+                    .getBuffer(RenderTypes.lines());
 
             for (BlockPos pos : visibleOres) {
 
                 Block block =
-                    client.level.getBlockState(pos).getBlock();
+                    client.level
+                        .getBlockState(pos)
+                        .getBlock();
 
                 if (!ORES.contains(block)) {
                     continue;
@@ -170,7 +183,9 @@ public final class OreHighlight {
                         0.002, 0.002, 0.002,
                         0.998, 0.998, 0.998
                     ),
-                    x, y, z,
+                    x,
+                    y,
+                    z,
                     argb,
                     2.0F
                 );
