@@ -28,11 +28,10 @@ public abstract class PlayerHeartsMixin {
     private static final Map<AvatarRenderState, float[]>
         visionmod$health = new WeakHashMap<>();
 
-    // Получаем здоровье игрока при обновлении
-    // его состояния рендеринга.
     @Inject(
         method = "extractRenderState(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;F)V",
-        at = @At("TAIL")
+        at = @At("TAIL"),
+        require = 0
     )
     private void visionmod$captureHealth(
             Avatar player,
@@ -49,10 +48,10 @@ public abstract class PlayerHeartsMixin {
         );
     }
 
-    // Рисуем сердечки над именем игрока.
     @Inject(
         method = "submitNameTag(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V",
-        at = @At("TAIL")
+        at = @At("TAIL"),
+        require = 0
     )
     private void visionmod$drawHearts(
             AvatarRenderState state,
@@ -61,7 +60,7 @@ public abstract class PlayerHeartsMixin {
             CameraRenderState camera,
             CallbackInfo ci
     ) {
-        if (!VisionModClient.enabled) {
+        if (!VisionModClient.isHeartsEnabled()) {
             return;
         }
 
@@ -79,7 +78,6 @@ public abstract class PlayerHeartsMixin {
         float hp = Math.max(0.0F, data[0]);
         float maxHp = Math.max(1.0F, data[1]);
 
-        // Одно сердечко = 2 HP.
         int slots = Math.min(
             20,
             (int) Math.ceil(maxHp / 2.0F)
@@ -92,24 +90,21 @@ public abstract class PlayerHeartsMixin {
 
         int empty = slots - filled;
 
-        String fullHearts = "♥".repeat(filled);
-        String emptyHearts = "♡".repeat(empty);
-
-        Component label = Component.literal(fullHearts)
-            .withStyle(ChatFormatting.RED)
-            .append(
-                Component.literal(emptyHearts)
-                    .withStyle(ChatFormatting.GRAY)
-            )
-            .append(
-                Component.literal(
-                    "  " +
-                    Math.round(hp * 10.0F) / 10.0F +
-                    "/" +
-                    Math.round(maxHp * 10.0F) / 10.0F +
-                    " HP"
-                ).withStyle(ChatFormatting.WHITE)
-            );
+        Component label = Component.literal(
+            "♥".repeat(filled)
+        ).withStyle(ChatFormatting.RED).append(
+            Component.literal(
+                "♡".repeat(empty)
+            ).withStyle(ChatFormatting.GRAY)
+        ).append(
+            Component.literal(
+                "  " +
+                Math.round(hp * 10.0F) / 10.0F +
+                "/" +
+                Math.round(maxHp * 10.0F) / 10.0F +
+                " HP"
+            ).withStyle(ChatFormatting.WHITE)
+        );
 
         queue.submitNameTag(
             matrices,
