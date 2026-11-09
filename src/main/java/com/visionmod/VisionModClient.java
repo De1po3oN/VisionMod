@@ -7,34 +7,29 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 public final class VisionModClient implements ClientModInitializer {
-
-    private static boolean enabled = false;
-    private static Double previousGamma = null;
+    public static volatile boolean enabled = false;
 
     @Override
     public void onInitializeClient() {
+        KeyMapping.Category category = KeyMapping.Category.register(
+            Identifier.fromNamespaceAndPath("visionmod", "general")
+        );
+
         KeyMapping toggle = KeyBindingHelper.registerKeyBinding(
             new KeyMapping(
                 "key.visionmod.toggle",
                 InputConstants.Type.KEYSYM,
                 InputConstants.KEY_END,
-                "category.visionmod"
+                category
             )
         );
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (toggle.consumeClick()) {
                 enabled = !enabled;
-
-                if (enabled) {
-                    previousGamma = client.options.gamma().get();
-                    client.options.gamma().set(1.0);
-                } else if (previousGamma != null) {
-                    client.options.gamma().set(previousGamma);
-                    previousGamma = null;
-                }
 
                 if (client.player != null) {
                     client.player.displayClientMessage(
