@@ -9,9 +9,9 @@ import org.lwjgl.glfw.GLFW;
 
 public final class VisionScreen extends Screen {
 
-    private static final int BG = 0xEB101722;
-    private static final int ROW = 0xD9212C3B;
-    private static final int HOVER = 0xDD34485D;
+    private static final int PANEL = 0xEF101722;
+    private static final int ROW = 0xE0212C3B;
+    private static final int HOVER = 0xFF34485D;
     private static final int CYAN = 0xFF67E8F9;
     private static final int WHITE = 0xFFF0F6FF;
     private static final int MUTED = 0xFF9BAABD;
@@ -26,280 +26,64 @@ public final class VisionScreen extends Screen {
         "Particles"
     };
 
-    private static final int[] PALETTE = {
-        0xFF67E8F9,
-        0xFFFF657D,
-        0xFF65F0B2,
-        0xFFFFD166,
-        0xFFB48CFF,
-        0xFFFF78CB,
-        0xFFFFA65C,
-        0xFFF0F6FF
-    };
-
-    private static final String[] COLOR_NAMES = {
-        "Cyan", "Red", "Green", "Yellow",
-        "Purple", "Pink", "Orange", "White"
-    };
-
-    private enum Page {
-        MAIN, ORE_COLORS
-    }
-
-    private Page page = Page.MAIN;
-    private int selectedOre = 0;
-    private long animationStart = System.nanoTime();
+    private boolean orePage;
+    private long animationStart;
 
     public VisionScreen() {
+        this(false);
+    }
+
+    public VisionScreen(boolean orePage) {
         super(Component.literal("Vision Mod"));
+        this.orePage = orePage;
+        this.animationStart = System.nanoTime();
     }
 
     private int panelWidth() {
-        return page == Page.MAIN ? 244 : 306;
+        return orePage ? 310 : 244;
     }
 
     private int panelHeight() {
-        return page == Page.MAIN ? 218 : 252;
+        return orePage ? 245 : 218;
     }
 
     private int left() {
-        return (this.width - panelWidth()) / 2;
+        return (width - panelWidth()) / 2;
     }
 
     private float progress() {
-        float t = (System.nanoTime() - animationStart)
-            / 230_000_000.0F;
+        float t = Math.min(
+            1F,
+            (System.nanoTime() - animationStart)
+                / 230_000_000F
+        );
 
-        t = Math.max(0.0F, Math.min(1.0F, t));
-
-        // Smooth ease-out animation.
-        float q = 1.0F - t;
-        return 1.0F - q * q * q;
+        return 1F - (float) Math.pow(1F - t, 3);
     }
 
     private int top() {
-        int finalY = Math.max(
-            8, this.height - panelHeight() - 46
+        int endY = Math.max(
+            8,
+            height - panelHeight() - 46
         );
 
-        int startY = this.height - 42;
+        int startY = height - 42;
 
         return Math.round(
-            startY + (finalY - startY) * progress()
+            startY + (endY - startY) * progress()
         );
     }
 
-    private void changePage(Page newPage) {
-        page = newPage;
-        animationStart = System.nanoTime();
-    }
-
-    @Override
-    public void renderBackground(
-            GuiGraphics graphics,
-            int mouseX,
-            int mouseY,
-            float delta
+    private static boolean inside(
+        double mx,
+        double my,
+        int x,
+        int y,
+        int w,
+        int h
     ) {
-        // Keep the game visible behind the menu.
-    }
-
-    @Override
-    public void render(
-            GuiGraphics graphics,
-            int mouseX,
-            int mouseY,
-            float delta
-    ) {
-        super.render(graphics, mouseX, mouseY, delta);
-
-        int x = left();
-        int y = top();
-        int w = panelWidth();
-        int h = panelHeight();
-
-        // Soft shadow.
-        graphics.fill(
-            x - 3, y + 3,
-            x + w + 3, y + h + 5,
-            0x55000000
-        );
-
-        // Main panel and cyan top border.
-        graphics.fill(x, y, x + w, y + h, BG);
-        graphics.fill(
-            x, y, x + w, y + 2, CYAN
-        );
-
-        graphics.drawString(
-            this.font,
-            page == Page.MAIN
-                ? "VISION MOD"
-                : "ORE COLORS",
-            x + 12, y + 12, WHITE
-        );
-
-        graphics.drawString(
-            this.font,
-            page == Page.MAIN
-                ? "FABRIC 1.21.11"
-                : "SELECT ORE + COLOR",
-            x + w - (page == Page.MAIN ? 96 : 128),
-            y + 12,
-            MUTED
-        );
-
-        graphics.fill(
-            x + 10, y + 30,
-            x + w - 10, y + 31,
-            0xFF354555
-        );
-
-        if (page == Page.MAIN) {
-            drawModules(graphics, mouseX, mouseY, x, y, w);
-        } else {
-            drawOreColors(graphics, mouseX, mouseY, x, y, w);
-        }
-    }
-
-    private void drawModules(
-            GuiGraphics g,
-            int mouseX,
-            int mouseY,
-            int x,
-            int y,
-            int w
-    ) {
-        for (int i = 0; i < MODULES.length; i++) {
-            int rowY = y + 37 + i * 25;
-
-            boolean hovered = inside(
-                mouseX, mouseY,
-                x + 9, rowY, w - 18, 22
-            );
-
-            g.fill(
-                x + 9, rowY,
-                x + w - 9, rowY + 22,
-                hovered ? HOVER : ROW
-            );
-
-            boolean active = active(i);
-            int accent = active ? CYAN : 0xFF526070;
-
-            g.fill(
-                x + 9, rowY + 3,
-                x + 12, rowY + 19,
-                accent
-            );
-
-            g.drawString(
-                this.font,
-                MODULES[i],
-                x + 20, rowY + 7, WHITE
-            );
-
-            g.drawString(
-                this.font,
-                active ? "ON" : "OFF",
-                x + w - 40,
-                rowY + 7,
-                active ? GREEN : MUTED
-            );
-        }
-
-        g.drawCenteredString(
-            this.font,
-            "RMB: Ore Colors / Particles",
-            x + w / 2,
-            y + 194,
-            MUTED
-        );
-    }
-
-    private void drawOreColors(
-            GuiGraphics g,
-            int mouseX,
-            int mouseY,
-            int x,
-            int y,
-            int w
-    ) {
-        // 10 ore categories in two columns.
-        for (int i = 0; i < OreColors.NAMES.length; i++) {
-            int col = i / 5;
-            int row = i % 5;
-
-            int bx = x + 10 + col * 144;
-            int by = y + 39 + row * 27;
-
-            boolean selected = selectedOre == i;
-            boolean hovered = inside(
-                mouseX, mouseY, bx, by, 139, 24
-            );
-
-            g.fill(
-                bx, by, bx + 139, by + 24,
-                selected
-                    ? 0xFF285264
-                    : (hovered ? HOVER : ROW)
-            );
-
-            int color = OreColors.getColor(i);
-
-            g.fill(
-                bx + 6, by + 7,
-                bx + 16, by + 17,
-                color
-            );
-
-            g.drawString(
-                this.font,
-                OreColors.NAMES[i],
-                bx + 22, by + 8,
-                selected ? CYAN : WHITE
-            );
-        }
-
-        g.drawString(
-            this.font,
-            "COLOR:",
-            x + 12, y + 185,
-            MUTED
-        );
-
-        for (int i = 0; i < PALETTE.length; i++) {
-            int bx = x + 12 + i * 35;
-            int by = y + 200;
-
-            int color = PALETTE[i];
-
-            g.fill(
-                bx, by, bx + 29, by + 26,
-                0xFF182536
-            );
-
-            g.fill(
-                bx + 3, by + 3,
-                bx + 26, by + 23,
-                color
-            );
-
-            if (OreColors.getColor(selectedOre) == color) {
-                g.renderOutline(
-                    bx, by, 29, 26,
-                    0xFFFFFFFF
-                );
-            }
-        }
-
-        g.drawCenteredString(
-            this.font,
-            "BACK",
-            x + w / 2,
-            y + 235,
-            CYAN
-        );
+        return mx >= x && mx < x + w
+            && my >= y && my < y + h;
     }
 
     private boolean active(int id) {
@@ -333,29 +117,190 @@ public final class VisionScreen extends Screen {
         }
     }
 
-    private static boolean inside(
-            double mx,
-            double my,
-            int x,
-            int y,
-            int w,
-            int h
+    @Override
+    public void renderBackground(
+        GuiGraphics g,
+        int mouseX,
+        int mouseY,
+        float delta
     ) {
-        return mx >= x && mx < x + w
-            && my >= y && my < y + h;
+        // Keep the game visible.
+    }
+
+    @Override
+    public void render(
+        GuiGraphics g,
+        int mouseX,
+        int mouseY,
+        float delta
+    ) {
+        super.render(g, mouseX, mouseY, delta);
+
+        int x = left();
+        int y = top();
+        int w = panelWidth();
+        int h = panelHeight();
+
+        g.fill(
+            x - 3, y + 4,
+            x + w + 3, y + h + 5,
+            0x66000000
+        );
+
+        g.fill(x, y, x + w, y + h, PANEL);
+        g.fill(x, y, x + w, y + 2, CYAN);
+
+        g.drawString(
+            font,
+            orePage ? "ORE COLORS" : "VISION MOD",
+            x + 12, y + 13, WHITE
+        );
+
+        g.drawString(
+            font,
+            "1.21.11",
+            x + w - 55, y + 13, MUTED
+        );
+
+        g.fill(
+            x + 10, y + 30,
+            x + w - 10, y + 31,
+            0xFF354555
+        );
+
+        if (orePage) {
+            drawOres(g, mouseX, mouseY, x, y);
+        } else {
+            drawMain(g, mouseX, mouseY, x, y, w);
+        }
+    }
+
+    private void drawMain(
+        GuiGraphics g,
+        int mx,
+        int my,
+        int x,
+        int y,
+        int w
+    ) {
+        for (int i = 0; i < MODULES.length; i++) {
+            int by = y + 37 + i * 25;
+
+            boolean hover = inside(
+                mx, my,
+                x + 9, by,
+                w - 18, 22
+            );
+
+            boolean on = active(i);
+
+            g.fill(
+                x + 9, by,
+                x + w - 9, by + 22,
+                hover ? HOVER : ROW
+            );
+
+            g.fill(
+                x + 9, by + 3,
+                x + 12, by + 19,
+                on ? CYAN : 0xFF526070
+            );
+
+            g.drawString(
+                font,
+                MODULES[i],
+                x + 20, by + 7,
+                WHITE
+            );
+
+            g.drawString(
+                font,
+                on ? "ON" : "OFF",
+                x + w - 40, by + 7,
+                on ? GREEN : MUTED
+            );
+        }
+
+        g.drawCenteredString(
+            font,
+            "RMB: Ore Highlight / Particles",
+            x + w / 2,
+            y + 194,
+            MUTED
+        );
+    }
+
+    private void drawOres(
+        GuiGraphics g,
+        int mx,
+        int my,
+        int x,
+        int y
+    ) {
+        for (int i = 0; i < OreColors.NAMES.length; i++) {
+
+            int column = i / 5;
+            int row = i % 5;
+
+            int bx = x + 9 + column * 147;
+            int by = y + 40 + row * 29;
+
+            boolean hover = inside(
+                mx, my, bx, by, 142, 25
+            );
+
+            g.fill(
+                bx, by,
+                bx + 142, by + 25,
+                hover ? HOVER : ROW
+            );
+
+            g.fill(
+                bx + 7, by + 7,
+                bx + 20, by + 19,
+                OreColors.getColor(i)
+            );
+
+            g.drawString(
+                font,
+                OreColors.NAMES[i],
+                bx + 26, by + 9,
+                WHITE
+            );
+        }
+
+        g.drawCenteredString(
+            font,
+            "RMB ORE TO EDIT COLOR",
+            x + 155, y + 192,
+            CYAN
+        );
+
+        g.fill(
+            x + 11, y + 214,
+            x + 299, y + 235,
+            ROW
+        );
+
+        g.drawCenteredString(
+            font,
+            "BACK",
+            x + 155, y + 221,
+            WHITE
+        );
     }
 
     @Override
     public boolean mouseClicked(
-            MouseButtonEvent click,
-            boolean doubled
+        MouseButtonEvent click,
+        boolean doubled
     ) {
+        double mx = click.x();
+        double my = click.y();
+
         int x = left();
         int y = top();
         int w = panelWidth();
-
-        double mx = click.x();
-        double my = click.y();
 
         boolean leftClick =
             click.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT;
@@ -363,68 +308,68 @@ public final class VisionScreen extends Screen {
         boolean rightClick =
             click.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
-        if (page == Page.MAIN) {
+        if (!orePage) {
+
             for (int i = 0; i < MODULES.length; i++) {
                 int by = y + 37 + i * 25;
 
-                if (inside(
-                    mx, my, x + 9, by, w - 18, 22
+                if (!inside(
+                    mx, my,
+                    x + 9, by,
+                    w - 18, 22
                 )) {
-                    if (leftClick) {
-                        toggle(i);
-                        return true;
-                    }
-
-                    if (rightClick && i == 1) {
-                        changePage(Page.ORE_COLORS);
-                        return true;
-                    }
-
-                    if (rightClick && i == 5) {
-                        this.minecraft.setScreen(
-                            new ParticleSettingsScreen()
-                        );
-                        return true;
-                    }
+                    continue;
                 }
-            }
-        } else {
-            // Select the ore category.
-            for (int i = 0; i < OreColors.NAMES.length; i++) {
-                int col = i / 5;
-                int row = i % 5;
 
-                int bx = x + 10 + col * 144;
-                int by = y + 39 + row * 27;
-
-                if (leftClick &&
-                    inside(mx, my, bx, by, 139, 24)) {
-                    selectedOre = i;
+                if (leftClick) {
+                    toggle(i);
                     return true;
                 }
-            }
 
-            // Select a color.
-            for (int i = 0; i < PALETTE.length; i++) {
-                int bx = x + 12 + i * 35;
+                if (rightClick && i == 1) {
+                    orePage = true;
+                    animationStart = System.nanoTime();
+                    return true;
+                }
 
-                if (leftClick &&
-                    inside(mx, my, bx, y + 200, 29, 26)) {
-                    OreColors.setColor(
-                        selectedOre, PALETTE[i]
+                if (rightClick && i == 5) {
+                    minecraft.setScreen(
+                        new ParticleSettingsScreen()
                     );
                     return true;
                 }
             }
 
-            // Back to the main menu.
-            if (leftClick &&
-                inside(
-                    mx, my,
-                    x + 95, y + 230,
-                    w - 190, 20
+        } else {
+
+            for (int i = 0; i < OreColors.NAMES.length; i++) {
+
+                int column = i / 5;
+                int row = i % 5;
+
+                int bx = x + 9 + column * 147;
+                int by = y + 40 + row * 29;
+
+                if (inside(
+                    mx, my, bx, by, 142, 25
                 )) {
-                changePage(Page.MAIN);
+
+                    if (rightClick || leftClick) {
+                        minecraft.setScreen(
+                            new OreColorPickerScreen(i)
+                        );
+                        return true;
+                    }
+                }
+            }
+
+            if (leftClick && inside(
+                mx, my,
+                x + 11, y + 214,
+                288, 21
+            )) {
+                orePage = false;
+                animationStart = System.nanoTime();
                 return true;
             }
         }
