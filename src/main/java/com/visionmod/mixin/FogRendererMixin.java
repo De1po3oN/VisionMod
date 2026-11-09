@@ -43,7 +43,7 @@ public abstract class FogRendererMixin {
         args.set(4, far);
 
         // Render-distance fog
-        args.set(5, far);
-        args.set(6, far);
+        args.set(4, far + 1000.0F); 
+        args.set(6, far + 1000.0F);
     }
 }
