@@ -29,13 +29,15 @@ public final class VisionScreen extends Screen {
     private boolean orePage;
     private long animationStart;
 
+    // Главное меню
     public VisionScreen() {
         this(false);
     }
 
-    public VisionScreen(boolean orePage) {
+    // true = открыть сразу страницу руд
+    public VisionScreen(boolean openOrePage) {
         super(Component.literal("Vision Mod"));
-        this.orePage = orePage;
+        this.orePage = openOrePage;
         this.animationStart = System.nanoTime();
     }
 
@@ -52,13 +54,14 @@ public final class VisionScreen extends Screen {
     }
 
     private float progress() {
-        float t = Math.min(
+        float t = Math.max(0F, Math.min(
             1F,
             (System.nanoTime() - animationStart)
                 / 230_000_000F
-        );
+        ));
 
-        return 1F - (float) Math.pow(1F - t, 3);
+        float remaining = 1F - t;
+        return 1F - remaining * remaining * remaining;
     }
 
     private int top() {
@@ -72,6 +75,11 @@ public final class VisionScreen extends Screen {
         return Math.round(
             startY + (endY - startY) * progress()
         );
+    }
+
+    private void switchPage(boolean ores) {
+        orePage = ores;
+        animationStart = System.nanoTime();
     }
 
     private static boolean inside(
@@ -102,16 +110,22 @@ public final class VisionScreen extends Screen {
         switch (id) {
             case 0 -> VisionModClient.fullBright =
                 !VisionModClient.fullBright;
+
             case 1 -> VisionModClient.oreHighlight =
                 !VisionModClient.oreHighlight;
+
             case 2 -> VisionModClient.clearWater =
                 !VisionModClient.clearWater;
+
             case 3 -> VisionModClient.clearLava =
                 !VisionModClient.clearLava;
+
             case 4 -> VisionModClient.playerHearts =
                 !VisionModClient.playerHearts;
+
             case 5 -> VisionModClient.particles =
                 !VisionModClient.particles;
+
             default -> {
             }
         }
@@ -119,64 +133,80 @@ public final class VisionScreen extends Screen {
 
     @Override
     public void renderBackground(
-        GuiGraphics g,
+        GuiGraphics graphics,
         int mouseX,
         int mouseY,
         float delta
     ) {
-        // Keep the game visible.
+        // Не затемняем весь экран.
     }
 
     @Override
     public void render(
-        GuiGraphics g,
+        GuiGraphics graphics,
         int mouseX,
         int mouseY,
         float delta
     ) {
-        super.render(g, mouseX, mouseY, delta);
+        super.render(graphics, mouseX, mouseY, delta);
 
         int x = left();
         int y = top();
         int w = panelWidth();
         int h = panelHeight();
 
-        g.fill(
+        // Тень
+        graphics.fill(
             x - 3, y + 4,
             x + w + 3, y + h + 5,
             0x66000000
         );
 
-        g.fill(x, y, x + w, y + h, PANEL);
-        g.fill(x, y, x + w, y + 2, CYAN);
+        // Панель
+        graphics.fill(
+            x, y,
+            x + w, y + h,
+            PANEL
+        );
 
-        g.drawString(
+        // Верхняя линия
+        graphics.fill(
+            x, y,
+            x + w, y + 2,
+            CYAN
+        );
+
+        graphics.drawString(
             font,
             orePage ? "ORE COLORS" : "VISION MOD",
-            x + 12, y + 13, WHITE
+            x + 12,
+            y + 13,
+            WHITE
         );
 
-        g.drawString(
+        graphics.drawString(
             font,
             "1.21.11",
-            x + w - 55, y + 13, MUTED
+            x + w - 55,
+            y + 13,
+            MUTED
         );
 
-        g.fill(
+        graphics.fill(
             x + 10, y + 30,
             x + w - 10, y + 31,
             0xFF354555
         );
 
         if (orePage) {
-            drawOres(g, mouseX, mouseY, x, y);
+            drawOres(graphics, mouseX, mouseY, x, y);
         } else {
-            drawMain(g, mouseX, mouseY, x, y, w);
+            drawMain(graphics, mouseX, mouseY, x, y, w);
         }
     }
 
     private void drawMain(
-        GuiGraphics g,
+        GuiGraphics graphics,
         int mx,
         int my,
         int x,
@@ -186,7 +216,7 @@ public final class VisionScreen extends Screen {
         for (int i = 0; i < MODULES.length; i++) {
             int by = y + 37 + i * 25;
 
-            boolean hover = inside(
+            boolean hovered = inside(
                 mx, my,
                 x + 9, by,
                 w - 18, 22
@@ -194,34 +224,36 @@ public final class VisionScreen extends Screen {
 
             boolean on = active(i);
 
-            g.fill(
+            graphics.fill(
                 x + 9, by,
                 x + w - 9, by + 22,
-                hover ? HOVER : ROW
+                hovered ? HOVER : ROW
             );
 
-            g.fill(
+            graphics.fill(
                 x + 9, by + 3,
                 x + 12, by + 19,
                 on ? CYAN : 0xFF526070
             );
 
-            g.drawString(
+            graphics.drawString(
                 font,
                 MODULES[i],
-                x + 20, by + 7,
+                x + 20,
+                by + 7,
                 WHITE
             );
 
-            g.drawString(
+            graphics.drawString(
                 font,
                 on ? "ON" : "OFF",
-                x + w - 40, by + 7,
+                x + w - 40,
+                by + 7,
                 on ? GREEN : MUTED
             );
         }
 
-        g.drawCenteredString(
+        graphics.drawCenteredString(
             font,
             "RMB: Ore Highlight / Particles",
             x + w / 2,
@@ -231,7 +263,7 @@ public final class VisionScreen extends Screen {
     }
 
     private void drawOres(
-        GuiGraphics g,
+        GuiGraphics graphics,
         int mx,
         int my,
         int x,
@@ -245,47 +277,52 @@ public final class VisionScreen extends Screen {
             int bx = x + 9 + column * 147;
             int by = y + 40 + row * 29;
 
-            boolean hover = inside(
-                mx, my, bx, by, 142, 25
+            boolean hovered = inside(
+                mx, my,
+                bx, by,
+                142, 25
             );
 
-            g.fill(
+            graphics.fill(
                 bx, by,
                 bx + 142, by + 25,
-                hover ? HOVER : ROW
+                hovered ? HOVER : ROW
             );
 
-            g.fill(
+            graphics.fill(
                 bx + 7, by + 7,
                 bx + 20, by + 19,
                 OreColors.getColor(i)
             );
 
-            g.drawString(
+            graphics.drawString(
                 font,
                 OreColors.NAMES[i],
-                bx + 26, by + 9,
+                bx + 26,
+                by + 9,
                 WHITE
             );
         }
 
-        g.drawCenteredString(
+        graphics.drawCenteredString(
             font,
-            "RMB ORE TO EDIT COLOR",
-            x + 155, y + 192,
+            "RMB ON ORE: EDIT COLOR",
+            x + 155,
+            y + 192,
             CYAN
         );
 
-        g.fill(
+        graphics.fill(
             x + 11, y + 214,
             x + 299, y + 235,
             ROW
         );
 
-        g.drawCenteredString(
+        graphics.drawCenteredString(
             font,
             "BACK",
-            x + 155, y + 221,
+            x + 155,
+            y + 221,
             WHITE
         );
     }
@@ -327,8 +364,7 @@ public final class VisionScreen extends Screen {
                 }
 
                 if (rightClick && i == 1) {
-                    orePage = true;
-                    animationStart = System.nanoTime();
+                    switchPage(true);
                     return true;
                 }
 
@@ -351,9 +387,10 @@ public final class VisionScreen extends Screen {
                 int by = y + 40 + row * 29;
 
                 if (inside(
-                    mx, my, bx, by, 142, 25
+                    mx, my,
+                    bx, by,
+                    142, 25
                 )) {
-
                     if (rightClick || leftClick) {
                         minecraft.setScreen(
                             new OreColorPickerScreen(i)
@@ -368,8 +405,7 @@ public final class VisionScreen extends Screen {
                 x + 11, y + 214,
                 288, 21
             )) {
-                orePage = false;
-                animationStart = System.nanoTime();
+                switchPage(false);
                 return true;
             }
         }
