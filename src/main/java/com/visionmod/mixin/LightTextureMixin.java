@@ -20,11 +20,11 @@ public abstract class LightTextureMixin {
         require = 0
     )
     private Object visionmod$fullbright(Object original) {
-        if (VisionModClient.enabled) {
+
+        if (VisionModClient.isFullBrightEnabled()) {
             return 16.0D;
         }
 
         return original;
     }
 }
-
