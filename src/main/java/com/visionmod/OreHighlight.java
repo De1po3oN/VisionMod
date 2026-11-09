@@ -2,16 +2,21 @@
 package com.visionmod;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
+
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 
@@ -28,20 +33,28 @@ public final class OreHighlight {
     private static final Set<Block> ORES = Set.of(
         Blocks.COAL_ORE,
         Blocks.DEEPSLATE_COAL_ORE,
+
         Blocks.IRON_ORE,
         Blocks.DEEPSLATE_IRON_ORE,
+
         Blocks.COPPER_ORE,
         Blocks.DEEPSLATE_COPPER_ORE,
+
         Blocks.GOLD_ORE,
         Blocks.DEEPSLATE_GOLD_ORE,
+
         Blocks.REDSTONE_ORE,
         Blocks.DEEPSLATE_REDSTONE_ORE,
+
         Blocks.EMERALD_ORE,
         Blocks.DEEPSLATE_EMERALD_ORE,
+
         Blocks.LAPIS_ORE,
         Blocks.DEEPSLATE_LAPIS_ORE,
+
         Blocks.DIAMOND_ORE,
         Blocks.DEEPSLATE_DIAMOND_ORE,
+
         Blocks.NETHER_GOLD_ORE,
         Blocks.NETHER_QUARTZ_ORE,
         Blocks.ANCIENT_DEBRIS
@@ -62,19 +75,19 @@ public final class OreHighlight {
             if (!VisionModClient.isOreEnabled()
                     || client.level == null
                     || client.player == null) {
+
                 visibleOres.clear();
                 return;
             }
 
-            ticks++;
-
-            if (ticks % 20 != 0) {
+            if (++ticks % 20 != 0) {
                 return;
             }
 
             visibleOres.clear();
 
-            BlockPos center = client.player.blockPosition();
+            BlockPos center =
+                client.player.blockPosition();
 
             BlockPos.MutableBlockPos cursor =
                 new BlockPos.MutableBlockPos();
@@ -82,7 +95,8 @@ public final class OreHighlight {
             for (int x = -RADIUS; x <= RADIUS; x++) {
                 for (int y = -VERTICAL_RADIUS;
                          y <= VERTICAL_RADIUS; y++) {
-                    for (int z = -RADIUS; z <= RADIUS; z++) {
+                    for (int z = -RADIUS;
+                         z <= RADIUS; z++) {
 
                         if (visibleOres.size() >= MAX_ORES) {
                             return;
@@ -136,7 +150,8 @@ public final class OreHighlight {
                 return;
             }
 
-            Minecraft client = Minecraft.getInstance();
+            Minecraft client =
+                Minecraft.getInstance();
 
             if (client.level == null) {
                 return;
@@ -161,16 +176,8 @@ public final class OreHighlight {
                     continue;
                 }
 
-                float[] rgb = color(block);
-
-                int red = (int) (rgb[0] * 255.0F);
-                int green = (int) (rgb[1] * 255.0F);
-                int blue = (int) (rgb[2] * 255.0F);
-
-                int argb = 0xFF000000
-                    | (red << 16)
-                    | (green << 8)
-                    | blue;
+                // Live color from the menu.
+                int argb = OreColors.colorFor(block);
 
                 double x = pos.getX() - camera.x;
                 double y = pos.getY() - camera.y;
@@ -183,62 +190,11 @@ public final class OreHighlight {
                         0.002, 0.002, 0.002,
                         0.998, 0.998, 0.998
                     ),
-                    x,
-                    y,
-                    z,
+                    x, y, z,
                     argb,
                     2.0F
                 );
             }
         });
-    }
-
-    private static float[] color(Block block) {
-
-        if (block == Blocks.DIAMOND_ORE ||
-            block == Blocks.DEEPSLATE_DIAMOND_ORE) {
-            return new float[] {0.0F, 1.0F, 1.0F};
-        }
-
-        if (block == Blocks.EMERALD_ORE ||
-            block == Blocks.DEEPSLATE_EMERALD_ORE) {
-            return new float[] {0.0F, 1.0F, 0.2F};
-        }
-
-        if (block == Blocks.REDSTONE_ORE ||
-            block == Blocks.DEEPSLATE_REDSTONE_ORE) {
-            return new float[] {1.0F, 0.1F, 0.1F};
-        }
-
-        if (block == Blocks.GOLD_ORE ||
-            block == Blocks.DEEPSLATE_GOLD_ORE ||
-            block == Blocks.NETHER_GOLD_ORE) {
-            return new float[] {1.0F, 0.85F, 0.0F};
-        }
-
-        if (block == Blocks.LAPIS_ORE ||
-            block == Blocks.DEEPSLATE_LAPIS_ORE) {
-            return new float[] {0.1F, 0.3F, 1.0F};
-        }
-
-        if (block == Blocks.COPPER_ORE ||
-            block == Blocks.DEEPSLATE_COPPER_ORE) {
-            return new float[] {1.0F, 0.45F, 0.1F};
-        }
-
-        if (block == Blocks.ANCIENT_DEBRIS) {
-            return new float[] {1.0F, 0.2F, 0.8F};
-        }
-
-        if (block == Blocks.IRON_ORE ||
-            block == Blocks.DEEPSLATE_IRON_ORE) {
-            return new float[] {1.0F, 0.75F, 0.55F};
-        }
-
-        if (block == Blocks.NETHER_QUARTZ_ORE) {
-            return new float[] {1.0F, 1.0F, 1.0F};
-        }
-
-        return new float[] {0.7F, 0.7F, 0.7F};
     }
 }
