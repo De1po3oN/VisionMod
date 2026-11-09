@@ -2,9 +2,8 @@
 package com.visionmod.mixin;
 
 import com.visionmod.VisionModClient;
-
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.world.level.material.FogType;
 
@@ -32,22 +31,29 @@ public abstract class FogRendererMixin {
 
         Minecraft client = Minecraft.getInstance();
 
-        if (client == null || client.gameRenderer == null) {
+        if (client.gameRenderer == null) {
             return;
         }
 
-        Camera camera = client.gameRenderer.getMainCamera();
-
-        if (camera == null) {
-            return;
-        }
+        Camera camera =
+            client.gameRenderer.getMainCamera();
 
         FogType fluid = camera.getFluidInCamera();
 
-        if (fluid != FogType.WATER && fluid != FogType.LAVA) {
+        boolean removeWaterFog =
+            fluid == FogType.WATER
+                && VisionModClient.isWaterEnabled();
+
+        boolean removeLavaFog =
+            fluid == FogType.LAVA
+                && VisionModClient.isLavaEnabled();
+
+        if (!removeWaterFog && !removeLavaFog) {
             return;
         }
 
+        // Отодвигаем начало и конец тумана
+        // за пределы нормальной дальности обзора.
         float far = 1000000.0F;
 
         args.set(3, far);
